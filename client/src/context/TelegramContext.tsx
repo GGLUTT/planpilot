@@ -22,6 +22,17 @@ interface TelegramContextType {
   enableClosingConfirmation: () => void;
   disableClosingConfirmation: () => void;
   sendData: (data: any) => void;
+  showMainButton: (text: string, callback: () => void) => void;
+  hideMainButton: () => void;
+  setMainButtonParams: (params: MainButtonParams) => void;
+}
+
+interface MainButtonParams {
+  text?: string;
+  color?: string;
+  textColor?: string;
+  isActive?: boolean;
+  isVisible?: boolean;
 }
 
 const TelegramContext = createContext<TelegramContextType | undefined>(undefined);
@@ -55,6 +66,18 @@ export const TelegramProvider: React.FC<{ children: ReactNode }> = ({ children }
             username: 'dev_user',
           });
         }
+      }
+      
+      // Configure MainButton with default styles
+      if (tgWebApp.MainButton) {
+        const themeParams = tgWebApp.themeParams || {};
+        const buttonColor = themeParams.button_color || '#2481cc';
+        const buttonTextColor = themeParams.button_text_color || '#ffffff';
+        
+        tgWebApp.MainButton.setParams({
+          color: buttonColor,
+          text_color: buttonTextColor,
+        });
       }
       
       setWebApp(tgWebApp);
@@ -125,6 +148,60 @@ export const TelegramProvider: React.FC<{ children: ReactNode }> = ({ children }
       console.log('Sending data to Telegram Bot:', data);
     }
   };
+  
+  const showMainButton = (text: string, callback: () => void) => {
+    if (webApp && webApp.MainButton) {
+      webApp.MainButton.setText(text);
+      webApp.MainButton.onClick(callback);
+      webApp.MainButton.show();
+    } else {
+      console.log('MainButton not available or in dev mode');
+    }
+  };
+  
+  const hideMainButton = () => {
+    if (webApp && webApp.MainButton) {
+      webApp.MainButton.hide();
+    }
+  };
+  
+  const setMainButtonParams = (params: MainButtonParams) => {
+    if (webApp && webApp.MainButton) {
+      const mainButtonParams: Record<string, any> = {};
+      
+      if (params.text) {
+        mainButtonParams.text = params.text;
+      }
+      
+      if (params.color) {
+        mainButtonParams.color = params.color;
+      }
+      
+      if (params.textColor) {
+        mainButtonParams.text_color = params.textColor;
+      }
+      
+      if (params.isActive !== undefined) {
+        if (params.isActive) {
+          webApp.MainButton.enable();
+        } else {
+          webApp.MainButton.disable();
+        }
+      }
+      
+      if (params.isVisible !== undefined) {
+        if (params.isVisible) {
+          webApp.MainButton.show();
+        } else {
+          webApp.MainButton.hide();
+        }
+      }
+      
+      if (Object.keys(mainButtonParams).length > 0) {
+        webApp.MainButton.setParams(mainButtonParams);
+      }
+    }
+  };
 
   const value = {
     webApp,
@@ -140,6 +217,9 @@ export const TelegramProvider: React.FC<{ children: ReactNode }> = ({ children }
     enableClosingConfirmation,
     disableClosingConfirmation,
     sendData,
+    showMainButton,
+    hideMainButton,
+    setMainButtonParams,
   };
 
   return (

@@ -13,6 +13,7 @@ export const AppContainer = styled.div`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  padding-bottom: var(--spacing-xxl); /* Space for Telegram's MainButton */
 `;
 
 export const Header = styled.header`
