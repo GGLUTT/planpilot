@@ -17,7 +17,7 @@ PlanPilot is a Telegram bot with an integrated Mini App that helps users manage 
 - Express.js
 - MongoDB (mongoose)
 - Telegraf (Telegram Bot API)
-- Netlify Functions (serverless)
+- Glitch (hosting)
 
 ### Client
 - React
@@ -33,7 +33,6 @@ PlanPilot is a Telegram bot with an integrated Mini App that helps users manage 
 - Node.js (v14+)
 - MongoDB
 - Telegram Bot Token
-- Netlify CLI (for local development)
 
 ### Installation
 
@@ -43,34 +42,24 @@ git clone https://github.com/GGLUTT/planpilot.git
 cd planpilot
 ```
 
-2. Install server dependencies:
+2. Install all dependencies:
 ```bash
-cd server
-npm install
+npm run install-all
 ```
 
-3. Install client dependencies:
-```bash
-cd ../client
-npm install
-```
-
-4. Create a `.env` file in the root directory with the following:
+3. Create a `.env` file in the root directory with the following:
 ```
 BOT_TOKEN=your_telegram_bot_token
 MONGODB_URI=mongodb://localhost:27017/planpilot
-WEBAPP_URL=https://planpilot.netlify.app
+WEBAPP_URL=https://cypress-pie-account.glitch.me
 ```
 
 ### Running the Application Locally
 
-**Option 1: Using Netlify Dev (Recommended)**
+**Option 1: Full Stack Development**
 ```bash
-cd client
-npm run netlify:dev
+npm run dev
 ```
-
-This will run both the client and serverless functions.
 
 **Option 2: Separate Development**
 1. Start the server:
@@ -87,9 +76,11 @@ npm run dev
 
 3. Access the Mini App through your Telegram bot or directly via the browser at `http://localhost:5173`.
 
-## Deployment to Netlify
+## Deployment to Glitch
 
-See [NETLIFY_SETUP.md](NETLIFY_SETUP.md) for detailed instructions on deploying to Netlify.
+See [GLITCH_SETUP.md](GLITCH_SETUP.md) for detailed instructions on deploying to Glitch.
+
+The application is currently deployed at: https://cypress-pie-account.glitch.me
 
 ## Bot Commands
 
@@ -111,12 +102,12 @@ planpilot/
 │   │   └── types/          # TypeScript types
 │   └── package.json
 ├── server/                 # Node.js back-end
-│   ├── functions/          # Netlify serverless functions
 │   ├── models/             # Mongoose models
 │   ├── routes/             # Express routes
+│   ├── data/               # Local data storage
 │   ├── index.js            # Server entry point
 │   └── package.json
-├── netlify.toml            # Netlify configuration
+├── package.json            # Root package.json for Glitch
 └── README.md
 ```
 

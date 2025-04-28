@@ -1,0 +1,28 @@
+{
+  "name": "planpilot",
+  "version": "1.0.0",
+  "description": "PlanPilot - Telegram Bot with Mini App",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js",
+    "build": "cd client && npm install && npm run build",
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "postinstall": "npm run build"
+  },
+  "engines": {
+    "node": "16.x"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "webapp",
+    "goals",
+    "planning"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "nodemon": "^3.0.1"
+  }
+} 

@@ -33,8 +33,14 @@ app.use((req, res, next) => {
   next();
 });
 
+// Serve static files from the client build directory if on Glitch
+const clientPath = path.join(__dirname, '../client/dist');
+if (fs.existsSync(clientPath)) {
+  app.use(express.static(clientPath));
+}
+
 // Basic route for testing
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   res.json({ message: 'PlanPilot API is working!' });
 });
 
@@ -68,7 +74,7 @@ bot.command('start', async (ctx) => {
       {
         reply_markup: {
           inline_keyboard: [
-            [{ text: '📱 Open Mini App', web_app: { url: `https://fa1ead7f984f3bee33c0a4bb630c15cc.serveo.net` } }]
+            [{ text: '📱 Open Mini App', web_app: { url: `https://cypress-pie-account.glitch.me` } }]
           ]
         }
       }
@@ -88,6 +94,15 @@ function generateRandomId(length) {
   }
   return result;
 }
+
+// Serve client app for all other routes (if on Glitch)
+app.get('*', (req, res) => {
+  if (fs.existsSync(path.join(clientPath, 'index.html'))) {
+    res.sendFile(path.join(clientPath, 'index.html'));
+  } else {
+    res.json({ message: 'PlanPilot API server. Frontend not built yet.' });
+  }
+});
 
 // Start server
 const PORT = process.env.PORT || 3001;

@@ -7,10 +7,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8888',
+        target: 'https://cypress-pie-account.glitch.me',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '/.netlify/functions/api')
       }
     }
   }
