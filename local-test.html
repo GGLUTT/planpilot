@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanPilot Local Test</title>
+    <script>
+        // Емуляція Telegram WebApp
+        window.Telegram = {
+            WebApp: {
+                ready: () => console.log('WebApp ready called'),
+                expand: () => console.log('WebApp expand called'),
+                close: () => console.log('WebApp close called'),
+                showAlert: (message) => alert(message),
+                showConfirm: (message, callback) => callback(confirm(message)),
+                openLink: (url) => window.open(url, '_blank'),
+                enableClosingConfirmation: () => console.log('Closing confirmation enabled'),
+                disableClosingConfirmation: () => console.log('Closing confirmation disabled'),
+                sendData: (data) => console.log('Sending data to bot:', data),
+                MainButton: {
+                    show: () => console.log('Main button shown'),
+                    hide: () => console.log('Main button hidden'),
+                    setText: (text) => console.log('Main button text set to:', text),
+                    onClick: (callback) => console.log('Main button click handler set')
+                },
+                initDataUnsafe: {
+                    user: {
+                        id: 123456789,
+                        first_name: "Test",
+                        last_name: "User",
+                        username: "testuser",
+                        language_code: "en"
+                    },
+                    start_param: "test-param"
+                }
+            }
+        };
+    </script>
+    <!-- Перенаправлення на вашу реальну програму -->
+    <script>
+        // Задайте посилання на ваш локальний додаток
+        const LOCAL_APP_URL = 'http://localhost:5173';
+        
+        window.onload = function() {
+            document.getElementById('openApp').addEventListener('click', function() {
+                if (document.getElementById('frame').src === 'about:blank') {
+                    // Завантажуємо додаток у фрейм при першому кліці
+                    document.getElementById('frame').src = LOCAL_APP_URL;
+                    this.textContent = 'Оновити додаток';
+                } else {
+                    // Оновлюємо фрейм при наступних кліках
+                    document.getElementById('frame').src = LOCAL_APP_URL;
+                }
+            });
+            
+            // Підключаємо обробники для тестових кнопок
+            document.getElementById('userDefault').addEventListener('click', function() {
+                window.TelegramTester.switchToUser('default');
+            });
+            
+            document.getElementById('userAdmin').addEventListener('click', function() {
+                window.TelegramTester.switchToUser('admin');
+            });
+            
+            document.getElementById('userNew').addEventListener('click', function() {
+                window.TelegramTester.switchToUser('newUser');
+            });
+            
+            document.getElementById('setParamBtn').addEventListener('click', function() {
+                const param = document.getElementById('startParam').value.trim();
+                window.TelegramTester.setStartParam(param);
+            });
+        };
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .panel {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #0088cc;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            margin-right: 5px;
+        }
+        button.small {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        h1, h2 {
+            color: #0088cc;
+        }
+        input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+        .button-group {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h1>PlanPilot - Локальне тестування Mini App</h1>
+        <p>Ця сторінка емулює Telegram Web App для локального тестування.</p>
+        <button id="openApp">Відкрити додаток</button>
+    </div>
+    
+    <div class="panel">
+        <h2>Тестові параметри</h2>
+        
+        <div class="button-group">
+            <h3>Тестові користувачі:</h3>
+            <button id="userDefault" class="small">Звичайний користувач</button>
+            <button id="userAdmin" class="small">Адміністратор</button>
+            <button id="userNew" class="small">Новий користувач</button>
+        </div>
+        
+        <div class="button-group">
+            <h3>Параметр запуску:</h3>
+            <input type="text" id="startParam" placeholder="Введіть параметр">
+            <button id="setParamBtn" class="small">Встановити</button>
+        </div>
+    </div>
+    
+    <div class="panel">
+        <h2>Емульовані дані Telegram</h2>
+        <pre id="tgData">
+{
+  "user": {
+    "id": 123456789,
+    "first_name": "Test",
+    "last_name": "User",
+    "username": "testuser",
+    "language_code": "en"
+  },
+  "start_param": "test-param"
+}</pre>
+    </div>
+    
+    <div class="panel">
+        <h2>Mini App (iframe)</h2>
+        <iframe id="frame" src="about:blank"></iframe>
+    </div>
+    
+    <div class="panel">
+        <h2>Консоль</h2>
+        <pre id="console">Логи з'являться тут...</pre>
+        <script>
+            // Заміна console.log
+            const originalLog = console.log;
+            console.log = function() {
+                originalLog.apply(console, arguments);
+                const consoleDiv = document.getElementById('console');
+                consoleDiv.textContent += '\n> ' + Array.from(arguments).join(' ');
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
+            };
+        </script>
+    </div>
+    
+    <!-- Підключаємо утиліту для тестування -->
+    <script src="test-telegram-data.js"></script>
+</body>
+</html> 
