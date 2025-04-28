@@ -1,203 +1,283 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useTelegram } from '../context/TelegramContext';
-
-interface MenuOption {
-  id: string;
-  label: string;
-  icon: string;
-  path: string;
-}
+import { useTheme } from '../context/ThemeContext';
 
 const TelegramMenu: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { showMainButton, hideMainButton, webApp, setMainButtonParams } = useTelegram();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
-  const menuOptions: MenuOption[] = [
-    { id: 'home', label: 'Home', icon: '🏠', path: '/' },
-    { id: 'goals', label: 'Goals', icon: '🎯', path: '/goals' },
-    { id: 'add', label: 'Add Goal', icon: '➕', path: '/add' },
-    { id: 'calendar', label: 'Calendar', icon: '📅', path: '/calendar' },
-    { id: 'profile', label: 'Profile', icon: '👤', path: '/profile' },
-  ];
-  
-  // Get current page title
-  const getCurrentPageTitle = () => {
-    const currentPath = location.pathname;
-    const currentOption = menuOptions.find(option => option.path === currentPath);
-    return currentOption ? `${currentOption.icon} ${currentOption.label}` : 'Menu';
-  };
-  
-  // Toggle menu
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-  
-  // Handle menu item selection
-  const handleMenuItemClick = (path: string) => {
-    navigate(path);
-    setIsMenuOpen(false);
-  };
-  
+  const { webApp } = useTelegram();
+  const { theme, toggleTheme } = useTheme();
+  const [activeTab, setActiveTab] = useState('home');
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  // Update active tab based on current location
   useEffect(() => {
-    // When component mounts, show the main button with menu
-    if (webApp && webApp.MainButton) {
-      const pageTitle = getCurrentPageTitle();
-      setMainButtonParams({
-        text: pageTitle,
-        isVisible: true,
-        isActive: true
-      });
-      webApp.MainButton.onClick(toggleMenu);
-    } else {
-      showMainButton('Menu', toggleMenu);
+    const path = location.pathname;
+    
+    if (path === '/') {
+      setActiveTab('home');
+    } else if (path.includes('/goals')) {
+      setActiveTab('goals');
+    } else if (path.includes('/stats')) {
+      setActiveTab('stats');
+    } else if (path.includes('/profile')) {
+      setActiveTab('profile');
     }
+  }, [location]);
+
+  // Handle scroll to hide/show menu
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > lastScrollY + 10) {
+        setIsVisible(false);
+      } else if (currentScrollY < lastScrollY - 10) {
+        setIsVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
     
     return () => {
-      // Clean up when component unmounts
-      hideMainButton();
+      window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
-  
-  // Update main button text based on current page
+  }, [lastScrollY]);
+
+  // Set TG theme if available
   useEffect(() => {
-    if (webApp && webApp.MainButton) {
-      const pageTitle = getCurrentPageTitle();
-      setMainButtonParams({
-        text: pageTitle
-      });
+    if (webApp?.themeParams) {
+      document.documentElement.style.setProperty('--tg-theme-bg-color', webApp.themeParams.bg_color || '#ffffff');
+      document.documentElement.style.setProperty('--tg-theme-text-color', webApp.themeParams.text_color || '#000000');
+      document.documentElement.style.setProperty('--tg-theme-hint-color', webApp.themeParams.hint_color || '#999999');
+      document.documentElement.style.setProperty('--tg-theme-link-color', webApp.themeParams.link_color || '#2678b6');
+      document.documentElement.style.setProperty('--tg-theme-button-color', webApp.themeParams.button_color || '#2678b6');
+      document.documentElement.style.setProperty('--tg-theme-button-text-color', webApp.themeParams.button_text_color || '#ffffff');
+      document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', webApp.themeParams.secondary_bg_color || '#f0f0f0');
     }
-  }, [location.pathname, webApp]);
-  
-  if (!isMenuOpen) {
-    return null;
-  }
-  
+  }, [webApp]);
+
+  const handleTabClick = (tab: string) => {
+    setActiveTab(tab);
+    
+    switch (tab) {
+      case 'home':
+        navigate('/');
+        break;
+      case 'goals':
+        navigate('/goals');
+        break;
+      case 'add':
+        navigate('/add');
+        break;
+      case 'stats':
+        navigate('/stats');
+        break;
+      case 'profile':
+        navigate('/profile');
+        break;
+      default:
+        navigate('/');
+    }
+  };
+
   return (
-    <MenuContainer>
-      <MenuOverlay onClick={toggleMenu} />
-      <MenuContent>
-        <MenuHeader>
-          <MenuTitle>Menu</MenuTitle>
-          <CloseButton onClick={toggleMenu}>✕</CloseButton>
-        </MenuHeader>
+    <AnimatePresence>
+      <MenuContainer 
+        as={motion.div}
+        initial={{ y: 100 }}
+        animate={{ y: isVisible ? 0 : 100 }}
+        transition={{ duration: 0.3 }}
+      >
+        <MenuItem 
+          active={activeTab === 'home'} 
+          onClick={() => handleTabClick('home')}
+        >
+          <IconWrapper>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+            <MenuText>Home</MenuText>
+          </IconWrapper>
+        </MenuItem>
         
-        <MenuItems>
-          {menuOptions.map((option) => (
-            <MenuItem 
-              key={option.id}
-              isActive={location.pathname === option.path}
-              onClick={() => handleMenuItemClick(option.path)}
-            >
-              <MenuItemIcon>{option.icon}</MenuItemIcon>
-              <MenuItemLabel>{option.label}</MenuItemLabel>
-            </MenuItem>
-          ))}
-        </MenuItems>
-      </MenuContent>
-    </MenuContainer>
+        <MenuItem 
+          active={activeTab === 'goals'} 
+          onClick={() => handleTabClick('goals')}
+        >
+          <IconWrapper>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <circle cx="12" cy="12" r="6" />
+              <circle cx="12" cy="12" r="2" />
+            </svg>
+            <MenuText>Goals</MenuText>
+          </IconWrapper>
+        </MenuItem>
+        
+        <AddButton onClick={() => handleTabClick('add')}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </AddButton>
+        
+        <MenuItem 
+          active={activeTab === 'stats'} 
+          onClick={() => handleTabClick('stats')}
+        >
+          <IconWrapper>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10" />
+              <line x1="12" y1="20" x2="12" y2="4" />
+              <line x1="6" y1="20" x2="6" y2="14" />
+            </svg>
+            <MenuText>Stats</MenuText>
+          </IconWrapper>
+        </MenuItem>
+        
+        <SettingsGroup>
+          <ThemeToggle 
+            onClick={toggleTheme} 
+            isDark={theme === 'dark'}
+          >
+            {theme === 'dark' ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            )}
+          </ThemeToggle>
+        </SettingsGroup>
+      </MenuContainer>
+    </AnimatePresence>
   );
 };
 
 const MenuContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-`;
-
-const MenuOverlay = styled.div`
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-`;
-
-const MenuContent = styled.div`
-  position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
+  height: 60px;
   background-color: var(--bg-color);
-  border-radius: 12px 12px 0 0;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  padding: var(--spacing-md);
-  animation: slideUp 0.3s ease-out;
-  
-  @keyframes slideUp {
-    from {
-      transform: translateY(100%);
-    }
-    to {
-      transform: translateY(0);
-    }
-  }
+  z-index: 1000;
+  padding: 0 16px;
+  border-top: 1px solid var(--border-color);
+  transition: background-color var(--transition-speed) ease;
 `;
 
-const MenuHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-md);
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--border-color);
-`;
-
-const MenuTitle = styled.h3`
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  margin: 0;
-`;
-
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--text-color);
-  padding: 4px;
-`;
-
-const MenuItems = styled.div`
+const MenuItem = styled.div<{ active: boolean }>`
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
-`;
-
-const MenuItem = styled.div<{ isActive: boolean }>`
-  display: flex;
   align-items: center;
-  padding: var(--spacing-sm);
-  background-color: ${({ isActive }) => isActive ? 'var(--secondary-bg-color)' : 'transparent'};
-  border-radius: var(--border-radius);
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 8px;
   cursor: pointer;
+  color: ${({ active }) => active ? 'var(--primary-color)' : 'var(--hint-color)'};
+  transition: color 0.3s ease, background-color 0.3s ease;
+  position: relative;
   
   &:hover {
-    background-color: var(--secondary-bg-color);
+    color: var(--primary-color);
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: ${({ active }) => active ? '24px' : '0'};
+    height: 3px;
+    background-color: var(--primary-color);
+    border-radius: 3px;
+    transition: width 0.3s ease;
   }
 `;
 
-const MenuItemIcon = styled.span`
-  font-size: 20px;
-  margin-right: var(--spacing-md);
+const IconWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+`;
+
+const MenuText = styled.span`
+  font-size: 10px;
+  font-weight: 500;
+`;
+
+const AddButton = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
+  box-shadow: 0 4px 10px rgba(38, 120, 182, 0.3);
+  cursor: pointer;
+  color: white;
+  margin-bottom: 16px;
+  transition: transform 0.2s ease, background-color 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
 `;
 
-const MenuItemLabel = styled.span`
-  font-size: var(--font-size-md);
-  font-weight: 500;
+const SettingsGroup = styled.div`
+  position: absolute;
+  top: -30px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+`;
+
+const ThemeToggle = styled.div<{ isDark: boolean }>`
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: ${({ isDark }) => isDark ? '#555' : '#f0f0f0'};
+  color: ${({ isDark }) => isDark ? '#fff' : '#333'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  
+  &:hover {
+    transform: scale(1.1);
+  }
 `;
 
 export default TelegramMenu; 

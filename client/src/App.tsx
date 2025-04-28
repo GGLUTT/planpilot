@@ -3,8 +3,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { TelegramProvider } from './context/TelegramContext';
 import { UserProvider } from './context/UserContext';
 import { GoalsProvider } from './context/GoalsContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { GlobalStyles } from './styles/GlobalStyles';
 import HomePage from './pages/HomePage';
+import GoalDetailPage from './pages/GoalDetailPage';
 import TelegramMenu from './components/TelegramMenu';
 import { AppContainer } from './styles/StyledComponents';
 
@@ -24,21 +26,23 @@ function App() {
 
   return (
     <TelegramProvider>
-      <UserProvider>
-        <GoalsProvider>
-          <Router>
-            <GlobalStyles />
-            <AppContainer>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                {/* Add more routes here for other pages */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-              <TelegramMenu />
-            </AppContainer>
-          </Router>
-        </GoalsProvider>
-      </UserProvider>
+      <ThemeProvider>
+        <UserProvider>
+          <GoalsProvider>
+            <Router>
+              <GlobalStyles />
+              <AppContainer>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/goals/:goalId" element={<GoalDetailPage />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+                <TelegramMenu />
+              </AppContainer>
+            </Router>
+          </GoalsProvider>
+        </UserProvider>
+      </ThemeProvider>
     </TelegramProvider>
   );
 }

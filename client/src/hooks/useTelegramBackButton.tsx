@@ -1,44 +1,28 @@
 import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { useTelegram } from '../context/TelegramContext';
 
 /**
- * Hook to handle Telegram BackButton functionality
- * @param showOnPaths - Array of paths where the back button should be shown (except home path)
- * @param homePath - The home path where back button should be hidden
+ * Hook for handling the Telegram WebApp BackButton
+ * @param callback Function to execute when the back button is pressed
  */
-export const useTelegramBackButton = (showOnPaths: string[] = [], homePath = '/') => {
+const useTelegramBackButton = (callback: () => void) => {
   const { webApp } = useTelegram();
-  const navigate = useNavigate();
-  const location = useLocation();
-  
+
   useEffect(() => {
-    // Only proceed if webApp is available and initialized
-    if (!webApp || !webApp.BackButton) return;
-    
-    const currentPath = location.pathname;
-    
-    // Check if we should show back button on this path
-    const shouldShowBackButton = 
-      currentPath !== homePath && 
-      (showOnPaths.length === 0 || showOnPaths.includes(currentPath));
-    
-    if (shouldShowBackButton) {
-      // Show back button and set up the click handler
+    if (webApp && webApp.BackButton) {
+      // Show the back button
       webApp.BackButton.show();
-      webApp.BackButton.onClick(() => {
-        navigate(-1);
-      });
-    } else {
-      // Hide back button on home or non-specified paths
-      webApp.BackButton.hide();
+      
+      // Set the callback function
+      webApp.BackButton.onClick(callback);
+      
+      // Cleanup when component unmounts
+      return () => {
+        webApp.BackButton.offClick(callback);
+        webApp.BackButton.hide();
+      };
     }
-    
-    return () => {
-      // Clean up event handler when component unmounts
-      if (webApp.BackButton) {
-        webApp.BackButton.offClick();
-      }
-    };
-  }, [webApp, location.pathname, navigate, homePath, showOnPaths]);
-}; 
+  }, [webApp, callback]);
+};
+
+export default useTelegramBackButton; 
