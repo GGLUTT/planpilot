@@ -4,15 +4,19 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTelegram } from '../context/TelegramContext';
 import { useTheme } from '../context/ThemeContext';
+import { useUser } from '../context/UserContext';
 
 const TelegramMenu: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { webApp } = useTelegram();
   const { theme, toggleTheme } = useTheme();
+  const { user } = useUser();
   const [activeTab, setActiveTab] = useState('home');
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isMainButton, setIsMainButton] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Update active tab based on current location
   useEffect(() => {
@@ -63,6 +67,51 @@ const TelegramMenu: React.FC = () => {
     }
   }, [webApp]);
 
+  // Set up main button based on route
+  useEffect(() => {
+    if (!webApp) return;
+
+    const path = location.pathname;
+    
+    // Config for different routes
+    if (path === '/') {
+      webApp.MainButton.setText('Add New Goal');
+      webApp.MainButton.show();
+      setIsMainButton(true);
+      
+      webApp.MainButton.onClick(() => {
+        navigate('/add');
+      });
+    } else if (path === '/add') {
+      webApp.MainButton.setText('Save Goal');
+      webApp.MainButton.show();
+      setIsMainButton(true);
+      
+      // The form will handle the click event
+    } else if (path.includes('/goals/')) {
+      webApp.MainButton.setText('Add Task');
+      webApp.MainButton.show();
+      setIsMainButton(true);
+      
+      // The detail page will handle the click event
+    } else if (path === '/profile/edit') {
+      webApp.MainButton.setText('Save Profile');
+      webApp.MainButton.show();
+      setIsMainButton(true);
+      
+      // The form will handle the click event
+    } else {
+      webApp.MainButton.hide();
+      setIsMainButton(false);
+    }
+
+    return () => {
+      if (webApp) {
+        webApp.MainButton.offClick();
+      }
+    };
+  }, [webApp, location.pathname, navigate]);
+
   const handleTabClick = (tab: string) => {
     setActiveTab(tab);
     
@@ -87,197 +136,308 @@ const TelegramMenu: React.FC = () => {
     }
   };
 
+  const handleAddGoal = () => {
+    navigate('/add');
+  };
+
+  const handleGoHome = () => {
+    navigate('/');
+  };
+
+  const handleViewProfile = () => {
+    navigate('/profile/edit');
+    setMenuOpen(false);
+  };
+
+  const toggleMenu = () => {
+    setMenuOpen(!menuOpen);
+  };
+
   return (
-    <AnimatePresence>
-      <MenuContainer 
-        as={motion.div}
-        initial={{ y: 100 }}
-        animate={{ y: isVisible ? 0 : 100 }}
-        transition={{ duration: 0.3 }}
-      >
-        <MenuItem 
-          active={activeTab === 'home'} 
-          onClick={() => handleTabClick('home')}
-        >
-          <IconWrapper>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
-            <MenuText>Home</MenuText>
-          </IconWrapper>
-        </MenuItem>
+    <>
+      <BottomNavigation>
+        <NavButton onClick={handleGoHome} active={location.pathname === '/'}>
+          <NavIcon>🏠</NavIcon>
+          <NavLabel>Home</NavLabel>
+        </NavButton>
         
-        <MenuItem 
-          active={activeTab === 'goals'} 
-          onClick={() => handleTabClick('goals')}
-        >
-          <IconWrapper>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <circle cx="12" cy="12" r="6" />
-              <circle cx="12" cy="12" r="2" />
-            </svg>
-            <MenuText>Goals</MenuText>
-          </IconWrapper>
-        </MenuItem>
-        
-        <AddButton onClick={() => handleTabClick('add')}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </AddButton>
-        
-        <MenuItem 
-          active={activeTab === 'stats'} 
-          onClick={() => handleTabClick('stats')}
-        >
-          <IconWrapper>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="20" x2="18" y2="10" />
-              <line x1="12" y1="20" x2="12" y2="4" />
-              <line x1="6" y1="20" x2="6" y2="14" />
-            </svg>
-            <MenuText>Stats</MenuText>
-          </IconWrapper>
-        </MenuItem>
-        
-        <SettingsGroup>
-          <ThemeToggle 
-            onClick={toggleTheme} 
-            isDark={theme === 'dark'}
+        {isMainButton ? (
+          <MainButtonPlaceholder />
+        ) : (
+          <AddButton
+            onClick={handleAddGoal}
+            as={motion.button}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            {theme === 'dark' ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="5" />
-                <line x1="12" y1="1" x2="12" y2="3" />
-                <line x1="12" y1="21" x2="12" y2="23" />
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                <line x1="1" y1="12" x2="3" y2="12" />
-                <line x1="21" y1="12" x2="23" y2="12" />
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-              </svg>
-            )}
-          </ThemeToggle>
-        </SettingsGroup>
-      </MenuContainer>
-    </AnimatePresence>
+            <span>➕</span>
+          </AddButton>
+        )}
+        
+        <NavButton onClick={toggleMenu}>
+          <NavIcon>⚙️</NavIcon>
+          <NavLabel>Menu</NavLabel>
+        </NavButton>
+      </BottomNavigation>
+      
+      <AnimatePresence>
+        {menuOpen && (
+          <MenuOverlay
+            as={motion.div}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMenuOpen(false)}
+          >
+            <MenuPanel
+              as={motion.div}
+              initial={{ y: 300 }}
+              animate={{ y: 0 }}
+              exit={{ y: 300 }}
+              onClick={e => e.stopPropagation()}
+            >
+              <MenuHeader>
+                <MenuTitle>Menu</MenuTitle>
+                <CloseButton onClick={() => setMenuOpen(false)}>✕</CloseButton>
+              </MenuHeader>
+              
+              <MenuItems>
+                <MenuItem onClick={handleViewProfile}>
+                  {user?.photoUrl ? (
+                    <MenuItemAvatar>
+                      <img src={user.photoUrl} alt={user.firstName} />
+                    </MenuItemAvatar>
+                  ) : (
+                    <MenuItemIcon>👤</MenuItemIcon>
+                  )}
+                  <MenuItemText>
+                    <MenuItemTitle>Profile</MenuItemTitle>
+                    <MenuItemDescription>View and edit your profile</MenuItemDescription>
+                  </MenuItemText>
+                </MenuItem>
+                
+                <MenuItem onClick={() => {
+                  navigate('/goals');
+                  setMenuOpen(false);
+                }}>
+                  <MenuItemIcon>🎯</MenuItemIcon>
+                  <MenuItemText>
+                    <MenuItemTitle>All Goals</MenuItemTitle>
+                    <MenuItemDescription>View all your goals</MenuItemDescription>
+                  </MenuItemText>
+                </MenuItem>
+                
+                <MenuItem onClick={() => {
+                  // Implement settings
+                  setMenuOpen(false);
+                }}>
+                  <MenuItemIcon>⚙️</MenuItemIcon>
+                  <MenuItemText>
+                    <MenuItemTitle>Settings</MenuItemTitle>
+                    <MenuItemDescription>App preferences</MenuItemDescription>
+                  </MenuItemText>
+                </MenuItem>
+                
+                <MenuItem onClick={() => {
+                  // Implement help
+                  setMenuOpen(false);
+                }}>
+                  <MenuItemIcon>❓</MenuItemIcon>
+                  <MenuItemText>
+                    <MenuItemTitle>Help</MenuItemTitle>
+                    <MenuItemDescription>Get assistance</MenuItemDescription>
+                  </MenuItemText>
+                </MenuItem>
+              </MenuItems>
+              
+              <MenuFooter>
+                <AppVersion>PlanPilot v1.0.0</AppVersion>
+              </MenuFooter>
+            </MenuPanel>
+          </MenuOverlay>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
-const MenuContainer = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
+const BottomNavigation = styled.div`
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   height: 60px;
   background-color: var(--bg-color);
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  padding: 0 16px;
-  border-top: 1px solid var(--border-color);
-  transition: background-color var(--transition-speed) ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10;
 `;
 
-const MenuItem = styled.div<{ active: boolean }>`
+const NavButton = styled.button<{ active?: boolean }>`
+  background: none;
+  border: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 8px 16px;
+  color: ${props => props.active ? 'var(--primary-color)' : 'var(--text-color)'};
+  font-weight: ${props => props.active ? 'bold' : 'normal'};
   cursor: pointer;
-  color: ${({ active }) => active ? 'var(--primary-color)' : 'var(--hint-color)'};
-  transition: color 0.3s ease, background-color 0.3s ease;
-  position: relative;
-  
-  &:hover {
-    color: var(--primary-color);
-  }
-  
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: ${({ active }) => active ? '24px' : '0'};
-    height: 3px;
-    background-color: var(--primary-color);
-    border-radius: 3px;
-    transition: width 0.3s ease;
-  }
 `;
 
-const IconWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
+const NavIcon = styled.div`
+  font-size: 20px;
+  margin-bottom: 4px;
 `;
 
-const MenuText = styled.span`
-  font-size: 10px;
-  font-weight: 500;
+const NavLabel = styled.span`
+  font-size: 12px;
 `;
 
-const AddButton = styled.div`
-  width: 48px;
-  height: 48px;
+const MainButtonPlaceholder = styled.div`
+  width: 60px;
+  height: 60px;
+`;
+
+const AddButton = styled.button`
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background-color: var(--primary-color);
+  color: white;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(38, 120, 182, 0.3);
+  font-size: 24px;
   cursor: pointer;
-  color: white;
-  margin-bottom: 16px;
-  transition: transform 0.2s ease, background-color 0.3s ease;
-  
-  &:hover {
-    transform: scale(1.1);
-  }
-  
-  &:active {
-    transform: scale(0.95);
-  }
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 `;
 
-const SettingsGroup = styled.div`
-  position: absolute;
-  top: -30px;
-  right: 16px;
+const MenuOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 100;
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  justify-content: flex-end;
 `;
 
-const ThemeToggle = styled.div<{ isDark: boolean }>`
+const MenuPanel = styled.div`
+  background-color: var(--bg-color);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  padding: 16px;
+  max-height: 70vh;
+  overflow-y: auto;
+`;
+
+const MenuHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 16px;
+`;
+
+const MenuTitle = styled.h2`
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+`;
+
+const CloseButton = styled.button`
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  background-color: ${({ isDark }) => isDark ? '#555' : '#f0f0f0'};
-  color: ${({ isDark }) => isDark ? '#fff' : '#333'};
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
   
   &:hover {
-    transform: scale(1.1);
+    background-color: var(--secondary-bg-color);
   }
+`;
+
+const MenuItems = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const MenuItem = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  
+  &:hover {
+    background-color: var(--secondary-bg-color);
+  }
+`;
+
+const MenuItemIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background-color: var(--secondary-bg-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  margin-right: 12px;
+`;
+
+const MenuItemAvatar = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-right: 12px;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+`;
+
+const MenuItemText = styled.div`
+  flex: 1;
+`;
+
+const MenuItemTitle = styled.div`
+  font-weight: 500;
+  margin-bottom: 4px;
+`;
+
+const MenuItemDescription = styled.div`
+  font-size: 12px;
+  color: var(--hint-color);
+`;
+
+const MenuFooter = styled.div`
+  padding-top: 16px;
+  margin-top: 16px;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+`;
+
+const AppVersion = styled.div`
+  font-size: 12px;
+  color: var(--hint-color);
 `;
 
 export default TelegramMenu; 

@@ -45,12 +45,17 @@ bot.command('start', async (ctx) => {
       });
     }
     
+    // Determine which URL to use for the Mini App
+    // Priority: 1. WEBAPP_URL env var, 2. Default Netlify URL, 3. GitHub Pages URL if available
+    const miniAppUrl = process.env.WEBAPP_URL || 
+                       'https://planpilot.netlify.app';
+    
     await ctx.reply(
       `Welcome to PlanPilot, ${user.firstName}! 🚀\n\nYour personal ID: ${user.userId}\n\nUse the menu below to manage your goals and plans:`,
       {
         reply_markup: {
           inline_keyboard: [
-            [{ text: '📱 Open Mini App', web_app: { url: process.env.WEBAPP_URL || 'https://planpilot.netlify.app' } }]
+            [{ text: '📱 Open Mini App', web_app: { url: miniAppUrl } }]
           ]
         }
       }

@@ -1,7 +1,20 @@
 import axios from 'axios';
+import { User } from '../types';
 
-// Використовуємо локальну адресу - проксі перенаправить запити
-const BASE_URL = '/api';
+// Determine API base URL based on the environment
+let BASE_URL = '/api'; // Default for Netlify deployment
+
+// If deployed to GitHub Pages or other non-Netlify environments
+if (window.location.hostname.includes('github.io') || 
+    !window.location.hostname.includes('netlify.app')) {
+  // For GitHub Pages or custom domain - point to Netlify function URL
+  BASE_URL = 'https://planpilot.netlify.app/.netlify/functions/api';
+}
+
+// Use environment variable if available
+if (import.meta.env.VITE_API_URL) {
+  BASE_URL = import.meta.env.VITE_API_URL;
+}
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -13,6 +26,11 @@ const api = axios.create({
 // User API
 export const getUser = async (userId: string) => {
   const response = await api.get(`/users/${userId}`);
+  return response.data;
+};
+
+export const createUser = async (userData: User) => {
+  const response = await api.post('/users', userData);
   return response.data;
 };
 

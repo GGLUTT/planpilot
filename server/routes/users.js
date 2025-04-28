@@ -2,6 +2,41 @@ const express = require('express');
 const router = express.Router();
 const { User } = require('../models/user');
 
+// Create a new user
+router.post('/', async (req, res) => {
+  try {
+    const { userId, username, firstName, lastName, photoUrl } = req.body;
+    
+    // Check if user with this ID already exists
+    const existingUser = await User.findOne({ userId });
+    if (existingUser) {
+      return res.status(409).json({ message: 'User with this ID already exists' });
+    }
+    
+    // Create new user
+    const newUser = await User.create({
+      userId,
+      username,
+      firstName,
+      lastName,
+      photoUrl,
+      telegramId: req.body.telegramId || null,
+      createdAt: new Date().toISOString()
+    });
+    
+    res.status(201).json({
+      userId: newUser.userId,
+      username: newUser.username,
+      firstName: newUser.firstName,
+      lastName: newUser.lastName,
+      photoUrl: newUser.photoUrl
+    });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
 // Get user profile by userId
 router.get('/:userId', async (req, res) => {
   try {
@@ -27,7 +62,7 @@ router.put('/:userId', async (req, res) => {
     const { username, photoUrl } = req.body;
     const updatedUser = await User.findOneAndUpdate(
       { userId: req.params.userId },
-      { $set: { username, photoUrl } },
+      { $set: { username, photoUrl, updatedAt: new Date().toISOString() } },
       { new: true }
     );
     

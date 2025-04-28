@@ -7,6 +7,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { GlobalStyles } from './styles/GlobalStyles';
 import HomePage from './pages/HomePage';
 import GoalDetailPage from './pages/GoalDetailPage';
+import EditProfilePage from './pages/EditProfilePage';
 import TelegramMenu from './components/TelegramMenu';
 import { AppContainer } from './styles/StyledComponents';
 
@@ -35,6 +36,7 @@ function App() {
                 <Routes>
                   <Route path="/" element={<HomePage />} />
                   <Route path="/goals/:goalId" element={<GoalDetailPage />} />
+                  <Route path="/profile/edit" element={<EditProfilePage />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
                 <TelegramMenu />

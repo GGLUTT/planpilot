@@ -1,229 +1,99 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import WebApp from '@twa-dev/sdk';
 
-interface TelegramContextType {
-  webApp: typeof WebApp | null;
-  user: {
-    id: number;
-    first_name: string;
-    last_name?: string;
-    username?: string;
-    language_code?: string;
-    photo_url?: string;
-  } | null;
-  queryParams: URLSearchParams;
-  isLoading: boolean;
-  error: string | null;
-  closeMiniApp: () => void;
-  showAlert: (message: string) => void;
-  showConfirm: (message: string) => Promise<boolean>;
-  openLink: (url: string) => void;
-  expandApp: () => void;
-  enableClosingConfirmation: () => void;
-  disableClosingConfirmation: () => void;
-  sendData: (data: any) => void;
-  showMainButton: (text: string, callback: () => void) => void;
-  hideMainButton: () => void;
-  setMainButtonParams: (params: MainButtonParams) => void;
+interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
 }
 
-interface MainButtonParams {
-  text?: string;
-  color?: string;
-  textColor?: string;
-  isActive?: boolean;
-  isVisible?: boolean;
+interface TelegramWebApp {
+  initData: string;
+  initDataUnsafe: {
+    query_id?: string;
+    user?: TelegramUser;
+    auth_date?: string;
+    hash?: string;
+  };
+  MainButton: {
+    show: () => void;
+    hide: () => void;
+    setText: (text: string) => void;
+    onClick: (fn: () => void) => void;
+    offClick: () => void;
+    setParams: (params: object) => void;
+  };
+  BackButton: {
+    show: () => void;
+    hide: () => void;
+    onClick: (fn: () => void) => void;
+    offClick: () => void;
+  };
+  HapticFeedback: {
+    impactOccurred: (style: string) => void;
+    notificationOccurred: (type: string) => void;
+    selectionChanged: () => void;
+  };
+  close: () => void;
+  expand: () => void;
+  setHeaderColor: (color: string) => void;
+  setBackgroundColor: (color: string) => void;
+  enableClosingConfirmation: () => void;
+  disableClosingConfirmation: () => void;
+  [key: string]: any;
+}
+
+interface TelegramContextType {
+  webApp: TelegramWebApp | null;
+  telegramUser: TelegramUser | null;
+  queryParams: URLSearchParams;
+  isTelegramWebapp: boolean;
 }
 
 const TelegramContext = createContext<TelegramContextType | undefined>(undefined);
 
 export const TelegramProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [webApp, setWebApp] = useState<typeof WebApp | null>(null);
-  const [user, setUser] = useState<TelegramContextType['user']>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [webApp, setWebApp] = useState<TelegramWebApp | null>(null);
+  const [telegramUser, setTelegramUser] = useState<TelegramUser | null>(null);
   const [queryParams] = useState<URLSearchParams>(new URLSearchParams(window.location.search));
+  const [isTelegramWebapp, setIsTelegramWebapp] = useState<boolean>(false);
 
   useEffect(() => {
-    try {
-      // Initialize Telegram Web App
-      const tgWebApp = WebApp;
+    // Get WebApp from window
+    if (window.Telegram && window.Telegram.WebApp) {
+      setWebApp(window.Telegram.WebApp);
+      setIsTelegramWebapp(true);
       
-      // Expand to fullscreen mode by default
-      tgWebApp.expand();
+      // Set expansion
+      window.Telegram.WebApp.expand();
       
-      // Get user data
-      if (tgWebApp.initDataUnsafe?.user) {
-        setUser(tgWebApp.initDataUnsafe.user);
-      } else {
-        // For development without actual WebApp we can get the user from query params
-        const userId = queryParams.get('user');
-        if (userId) {
-          setUser({
-            id: parseInt(userId, 10),
-            first_name: 'Dev',
-            last_name: 'User',
-            username: 'dev_user',
-          });
-        }
+      // Get user info from WebApp
+      if (window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+        setTelegramUser(window.Telegram.WebApp.initDataUnsafe.user);
       }
+    } else {
+      // Running outside of Telegram WebApp
+      setIsTelegramWebapp(false);
       
-      // Configure MainButton with default styles
-      if (tgWebApp.MainButton) {
-        const themeParams = tgWebApp.themeParams || {};
-        const buttonColor = themeParams.button_color || '#2481cc';
-        const buttonTextColor = themeParams.button_text_color || '#ffffff';
-        
-        tgWebApp.MainButton.setParams({
-          color: buttonColor,
-          text_color: buttonTextColor,
-        });
+      // Try to get user data from URL parameters for testing
+      const mockUserId = queryParams.get('mockUser');
+      if (mockUserId) {
+        const mockUser: TelegramUser = {
+          id: parseInt(mockUserId),
+          first_name: queryParams.get('firstName') || 'Test',
+          last_name: queryParams.get('lastName') || 'User',
+          username: queryParams.get('username') || 'testuser',
+          photo_url: queryParams.get('photoUrl') || undefined
+        };
+        setTelegramUser(mockUser);
       }
-      
-      setWebApp(tgWebApp);
-      setIsLoading(false);
-    } catch (err) {
-      setError('Failed to initialize Telegram Web App');
-      setIsLoading(false);
-      console.error('Failed to initialize Telegram Web App:', err);
     }
   }, [queryParams]);
 
-  const closeMiniApp = () => {
-    if (webApp) {
-      webApp.close();
-    }
-  };
-
-  const showAlert = (message: string) => {
-    if (webApp) {
-      webApp.showAlert(message);
-    } else {
-      alert(message);
-    }
-  };
-
-  const showConfirm = (message: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      if (webApp) {
-        webApp.showConfirm(message, (confirmed) => {
-          resolve(confirmed);
-        });
-      } else {
-        resolve(window.confirm(message));
-      }
-    });
-  };
-
-  const openLink = (url: string) => {
-    if (webApp) {
-      webApp.openLink(url);
-    } else {
-      window.open(url, '_blank');
-    }
-  };
-
-  const expandApp = () => {
-    if (webApp) {
-      webApp.expand();
-    }
-  };
-
-  const enableClosingConfirmation = () => {
-    if (webApp) {
-      webApp.enableClosingConfirmation();
-    }
-  };
-
-  const disableClosingConfirmation = () => {
-    if (webApp) {
-      webApp.disableClosingConfirmation();
-    }
-  };
-
-  const sendData = (data: any) => {
-    if (webApp) {
-      webApp.sendData(JSON.stringify(data));
-    } else {
-      console.log('Sending data to Telegram Bot:', data);
-    }
-  };
-  
-  const showMainButton = (text: string, callback: () => void) => {
-    if (webApp && webApp.MainButton) {
-      webApp.MainButton.setText(text);
-      webApp.MainButton.onClick(callback);
-      webApp.MainButton.show();
-    } else {
-      console.log('MainButton not available or in dev mode');
-    }
-  };
-  
-  const hideMainButton = () => {
-    if (webApp && webApp.MainButton) {
-      webApp.MainButton.hide();
-    }
-  };
-  
-  const setMainButtonParams = (params: MainButtonParams) => {
-    if (webApp && webApp.MainButton) {
-      const mainButtonParams: Record<string, any> = {};
-      
-      if (params.text) {
-        mainButtonParams.text = params.text;
-      }
-      
-      if (params.color) {
-        mainButtonParams.color = params.color;
-      }
-      
-      if (params.textColor) {
-        mainButtonParams.text_color = params.textColor;
-      }
-      
-      if (params.isActive !== undefined) {
-        if (params.isActive) {
-          webApp.MainButton.enable();
-        } else {
-          webApp.MainButton.disable();
-        }
-      }
-      
-      if (params.isVisible !== undefined) {
-        if (params.isVisible) {
-          webApp.MainButton.show();
-        } else {
-          webApp.MainButton.hide();
-        }
-      }
-      
-      if (Object.keys(mainButtonParams).length > 0) {
-        webApp.MainButton.setParams(mainButtonParams);
-      }
-    }
-  };
-
-  const value = {
-    webApp,
-    user,
-    queryParams,
-    isLoading,
-    error,
-    closeMiniApp,
-    showAlert,
-    showConfirm,
-    openLink,
-    expandApp,
-    enableClosingConfirmation,
-    disableClosingConfirmation,
-    sendData,
-    showMainButton,
-    hideMainButton,
-    setMainButtonParams,
-  };
-
   return (
-    <TelegramContext.Provider value={value}>
+    <TelegramContext.Provider value={{ webApp, telegramUser, queryParams, isTelegramWebapp }}>
       {children}
     </TelegramContext.Provider>
   );
@@ -236,5 +106,14 @@ export const useTelegram = (): TelegramContextType => {
   }
   return context;
 };
+
+// Add this to the window object for TypeScript
+declare global {
+  interface Window {
+    Telegram: {
+      WebApp: TelegramWebApp;
+    };
+  }
+}
 
 export default TelegramContext; 

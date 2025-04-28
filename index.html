@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>PlanPilot - Telegram Mini App</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
       --tg-theme-bg-color: #ffffff;
@@ -125,6 +126,16 @@
   </div>
   
   <script>
+    // Ініціалізація Telegram Web App
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    
+    // Автоматичне встановлення теми відповідно до Telegram
+    if (tg.colorScheme === 'dark') {
+      document.body.setAttribute('data-theme', 'dark');
+      document.getElementById('themeToggle').textContent = '☀️';
+    }
+    
     // Функція для перемикання теми
     const themeToggle = document.getElementById('themeToggle');
     const body = document.body;
@@ -139,11 +150,22 @@
       }
     });
     
-    // Імітація запуску Telegram Mini App
-    document.getElementById('startApp').addEventListener('click', () => {
-      // Перенаправлення на реальний додаток
-      window.location.href = '/app/';
-    });
+    // Функція для запуску додатку
+    function startApp() {
+      // Якщо це Telegram Web App, надаємо сигнал про готовність і використовуємо MainButton
+      if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        // Використовуємо API Telegram для переходу на основну сторінку
+        localStorage.setItem('isLoggedIn', 'true');
+        window.location.href = 'app/index.html';
+      } else {
+        // Якщо не в Telegram, звичайний перехід
+        localStorage.setItem('isLoggedIn', 'true');
+        window.location.href = 'app/index.html';
+      }
+    }
+    
+    // Додаємо обробник для кнопки
+    document.getElementById('startApp').addEventListener('click', startApp);
   </script>
 </body>
 </html> 
