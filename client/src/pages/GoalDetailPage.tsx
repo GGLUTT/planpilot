@@ -22,7 +22,7 @@ import useTelegramBackButton from '../hooks/useTelegramBackButton';
 
 const GoalDetailPage: React.FC = () => {
   const { goalId } = useParams<{ goalId: string }>();
-  const { goals, updateGoal, isLoading, error } = useGoals();
+  const { goals, updateGoal, isLoading } = useGoals();
   const navigate = useNavigate();
   const { showMainButton, hideMainButton, showAlert, setMainButtonParams } = useTelegram();
   const [goal, setGoal] = useState<any>(null);
@@ -61,7 +61,7 @@ const GoalDetailPage: React.FC = () => {
 
   // Timer effect
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    let interval: number | null = null;
     
     if (isTimerActive) {
       interval = setInterval(() => {
@@ -103,7 +103,10 @@ const GoalDetailPage: React.FC = () => {
         startDate: new Date().toISOString()
       };
       
-      await updateGoal(updatedGoal);
+      await updateGoal(goal._id, {
+        status: 'in-progress',
+        startDate: new Date().toISOString()
+      });
       setGoal(updatedGoal);
       setIsTimerActive(true);
       setMainButtonParams({ text: 'Mark as Completed' });
@@ -118,7 +121,10 @@ const GoalDetailPage: React.FC = () => {
         completionDate: new Date().toISOString()
       };
       
-      await updateGoal(updatedGoal);
+      await updateGoal(goal._id, {
+        status: 'completed',
+        completionDate: new Date().toISOString()
+      });
       setGoal(updatedGoal);
       setIsTimerActive(false);
       hideMainButton();
@@ -137,7 +143,7 @@ const GoalDetailPage: React.FC = () => {
       );
       
       const updatedGoal = { ...goal, tasks: updatedTasks };
-      await updateGoal(updatedGoal);
+      await updateGoal(goal._id, { tasks: updatedTasks });
       setGoal(updatedGoal);
       
       if (completed) {

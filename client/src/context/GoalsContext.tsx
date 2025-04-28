@@ -26,7 +26,10 @@ export const GoalsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const addGoal = async (goalData: Omit<Goal, '_id' | 'createdAt' | 'tasks'> & { tasks?: Omit<Task, '_id'>[] }) => {
     setIsLoading(true);
     try {
-      const newGoal = await createGoal(goalData);
+      const newGoal = await createGoal({
+        ...goalData,
+        deadline: goalData.deadline ? new Date(goalData.deadline) : undefined
+      });
       setGoals((prevGoals) => [...prevGoals, newGoal]);
       setError(null);
     } catch (error) {
@@ -40,7 +43,10 @@ export const GoalsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const updateGoalById = async (goalId: string, goalData: Partial<Omit<Goal, '_id' | 'userId' | 'createdAt'>>) => {
     setIsLoading(true);
     try {
-      const updatedGoal = await updateGoal(goalId, goalData);
+      const updatedGoal = await updateGoal(goalId, {
+        ...goalData,
+        deadline: goalData.deadline ? new Date(goalData.deadline) : undefined
+      });
       setGoals((prevGoals) =>
         prevGoals.map((goal) => (goal._id === goalId ? updatedGoal : goal))
       );

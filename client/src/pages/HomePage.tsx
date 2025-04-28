@@ -12,7 +12,6 @@ import {
   Subtitle,
   Button,
   EmptyState,
-  Flex,
   LoadingContainer,
   Loader,
   Section
@@ -22,7 +21,7 @@ import GoalCard from '../components/GoalCard';
 
 const HomePage: React.FC = () => {
   const { user, isLoading: userLoading } = useUser();
-  const { goals, isLoading: goalsLoading, error, fetchGoals } = useGoals();
+  const { goals, isLoading: goalsLoading, fetchGoals } = useGoals();
   const navigate = useNavigate();
 
   useEffect(() => {

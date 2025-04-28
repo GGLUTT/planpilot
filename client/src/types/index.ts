@@ -22,6 +22,8 @@ export interface Goal {
   priority: 'low' | 'medium' | 'high';
   tasks: Task[];
   createdAt: string;
+  startDate?: string;
+  completionDate?: string;
 }
 
 export interface UserContextType {

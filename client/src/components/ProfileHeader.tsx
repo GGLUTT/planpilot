@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { User } from '../types';
-import { Avatar, Flex, Title, SmallText, IconButton } from '../styles/StyledComponents';
+import { Avatar, Title, IconButton } from '../styles/StyledComponents';
 
 interface ProfileHeaderProps {
   user: User;
